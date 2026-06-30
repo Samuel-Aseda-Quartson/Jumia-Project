@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Log In — Jumia Price Tracker{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="container">
+        <div class="auth-card">
+
+            <h1>Welcome back</h1>
+            <p class="auth-subtitle">Log in to view and manage your tracked products.</p>
+
+            <form action="{{ url_for('login') }}" method="POST">
+
+                <label class="form-label-dark" for="email">Email Address</label>
+                <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    placeholder="samuel@example.com"
+                    required
+                >
+
+                <label class="form-label-dark" for="password">Password</label>
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    placeholder="Your password"
+                    required
+                >
+
+                <button type="submit" class="btn-auth-submit">
+                    Log In
+                </button>
+
+            </form>
+
+            <div class="auth-divider">
+                Don't have an account?
+                <a href="{{ url_for('signup') }}">Sign up free</a>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

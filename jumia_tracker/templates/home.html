@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Home — Jumia Price Tracker{% endblock %}
+
+{% block content %}
+
+<!-- =====================================================
+     HERO SECTION
+     Full viewport height, content centered vertically
+     No gradients — solid background from body
+     ===================================================== -->
+
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-inner">
+
+            <h1 class="hero-headline">
+                Welcome to Jumia Price Tracker
+            </h1>
+
+            <p class="hero-subheading">
+                Track prices on Jumia Ghana.<br>
+                Get SMS alerts when prices drop.
+            </p>
+
+            <!-- SVG ILLUSTRATION -->
+            <div class="hero-illustration">
+                <img
+                    src="{{ url_for('static', filename='hero-illustration.svg') }}"
+                    alt="Person tracking prices on phone"
+                    class="hero-img"
+                >
+            </div>
+
+            <div class="hero-cta-group">
+                <a href="{{ url_for('add_product') }}" class="btn-cta-filled">
+                    Start Tracking
+                </a>
+                <a href="{{ url_for('view_products') }}" class="btn-cta-outline">
+                    View My Products
+                </a>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}
+

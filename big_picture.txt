@@ -1,0 +1,303 @@
+//PLAN/
+PHASE 1  ✅  Add a product to track (add_product.py)
+PHASE 2  ✅  One-off price lookup (get_price.py)
+PHASE 3  ✅  Detect price changes (check_prices.py)
+PHASE 4  ✅  SMS alerts + cron automation
+PHASE 5  →   Go live with real SMS (where you are now)
+PHASE 6  →   Multi-user system (database + user accounts)
+PHASE 7  →   Web interface (the webpage your friends use)
+PHASE 8  →   Deploy to a cloud server (runs 24/7, laptop off)
+///////
+
+
+# Jumia Price Tracker — Phase 4 Handoff Summary
+### From SMS Integration to Cron Automation
+
+---
+
+## What Phase 4 Was Trying To Do
+
+Phases 1–3 built a system that could track products and detect price changes — but only when you manually ran the script. Phase 4 had two goals:
+
+1. Send you an SMS automatically when a price changes
+2. Run the entire check automatically without you touching the keyboard
+
+---
+
+## What We Built and Why
+
+### 1. config.txt
+A plain text file that stores your sensitive credentials:
+```
+PHONE: +233XXXXXXXXX
+AT_USERNAME: your_username
+AT_API_KEY: your_api_key
+```
+
+**Why it exists:** If you paste your API key directly into your Python script and share that script with anyone — or accidentally upload it to GitHub — someone else can use your Africa's Talking account and bill it to you. Putting credentials in a separate file means you share the code freely and keep the secrets on your machine only.
+
+This pattern is called **externalized configuration**. Every real production system uses it.
+
+---
+
+### 2. Africa's Talking SDK
+A Python package that lets your script talk to Africa's Talking's servers to send SMS.
+
+**How to install it:**
+```bash
+pip install africastalking
+```
+
+**Why it goes inside the virtual environment:** The SDK is installed specifically inside `.venv` — not system Python. This keeps it contained to your project. If you open a new terminal tomorrow without activating the environment first, Python will not find it.
+
+**How your script uses it:**
+```python
+africastalking.initialize(username, api_key)   # authenticate
+sms = africastalking.SMS                        # get the SMS tool
+sms.send(message, [phone_number])              # fire the SMS
+```
+
+**The warning you kept seeing:**
+```
+Sandbox is currently not available for the Whatsapp service
+```
+Harmless. Africa's Talking is telling you their WhatsApp sandbox does not exist. You are not using WhatsApp. You are using SMS. Ignore it every time.
+
+---
+
+### 3. The Virtual Environment Problem
+
+You have two virtual environments on your machine: `venv` and `.venv`. This caused confusion because:
+
+- We originally installed africastalking into `venv`
+- VSCode was silently activating `.venv` every time you opened a terminal
+- Python inside `.venv` had never heard of africastalking
+
+**The fix:** Install africastalking into `.venv` since that is what VSCode uses. Work with the tool, not against it.
+
+**The rule going forward:** Before running any script, your terminal prompt must show `(.venv)`. That means the environment is active and Python can find africastalking and Playwright. If it does not show `(.venv)`, run:
+```bash
+source ~/Jumia\ Project/.venv/bin/activate
+```
+
+---
+
+### 4. The Headless Problem
+
+`check_prices.py` uses `headless=False` so Playwright opens a real visible browser. This is necessary because Jumia runs JavaScript that interrogates the browser environment before serving the page. A headless browser is missing signals like screen dimensions — Jumia detects this and serves a stripped page with no price data.
+
+**The problem with cron:** Cron runs in the background with no screen. If Playwright tries to open a visible browser and there is no display, the script crashes silently. No price checks, no SMS, no errors — just nothing.
+
+**The solution: Xvfb (X Virtual Framebuffer)**
+
+Xvfb creates a fake screen entirely in memory. The browser believes it has a real monitor, passes all of Jumia's checks, but nothing is actually drawn anywhere. Cron can run it silently in the background.
+
+**To install:**
+```bash
+sudo apt install xvfb -y
+```
+
+**To start manually:**
+```bash
+Xvfb :99 -screen 0 1280x720x24 &
+```
+
+Breaking that down:
+- `:99` — the ID assigned to this fake display. Think of it like naming a monitor. You could use `:25` or `:98` — the number does not matter as long as it matches what you tell programs to use. Your real monitor is typically `:0`, so `:99` avoids conflicts.
+- `-screen 0 1280x720x24` — tells Xvfb to pretend it is a 1280×720 screen with 24-bit color. Looks like a real monitor to anything that checks.
+- `&` — runs Xvfb in the background so your terminal stays free.
+
+**The XF86 warnings Xvfb prints:**
+```
+Could not resolve keysym XF86FishingChart
+Could not resolve keysym XF86NavInfo
+```
+Xvfb loads a keyboard layout when it starts. Some layouts include keys for specialized hardware — marine GPS, autopilot systems, cameras. Your machine does not have those keys, so Xvfb warns you. They are completely harmless. The last line always confirms this:
+```
+Errors from xkbcomp are not fatal to the X server
+```
+"Fatal" means the program cannot continue. "Non-fatal" means it noted the problem and moved on. These warnings appear twice — once when Xvfb starts, once when it shuts down.
+
+---
+
+### 5. run_check.sh — The Wrapper Script
+```bash
+#!/bin/bash
+Xvfb :99 -screen 0 1280x720x24 &
+XVFB_PID=$!
+export DISPLAY=:99
+sleep 1
+/home/oluwa/Jumia\ Project/.venv/bin/python3 "/home/oluwa/Jumia Project/check_prices.py"
+kill $XVFB_PID
+```
+
+**Why this script exists at all:**
+
+Cron has none of the things your terminal session has. It does not know about your virtual environment, it has no screen, and it does not know where your project lives. If you pointed cron directly at `check_prices.py`, three things would break:
+
+1. No display — Playwright crashes looking for a screen
+2. No `DISPLAY` variable — programs cannot find the fake display even if it exists
+3. No virtual environment — Python cannot find africastalking or Playwright
+
+The wrapper script fixes all three before handing off to Python.
+
+**Every line explained:**
+
+`#!/bin/bash` — tells Linux this is a bash script. Always the first line of a shell script.
+
+`Xvfb :99 -screen 0 1280x720x24 &` — starts the fake display in the background.
+
+`XVFB_PID=$!` — `$!` is a special bash variable that always holds the ID of the last background process started. We save it so we can kill Xvfb specifically at the end, instead of killing everything named Xvfb (which could cause problems if multiple instances are running).
+
+`export DISPLAY=:99` — tells every program launched after this line "your screen is display number 99". Without this, Playwright starts, looks for a screen, finds nothing, and crashes. This is the single most important line for making Xvfb work with cron.
+
+`sleep 1` — waits one second for Xvfb to fully initialize. If Playwright launches before Xvfb is ready, it finds an empty display and crashes.
+
+`/home/oluwa/Jumia\ Project/.venv/bin/python3` — calls the exact Python binary inside the virtual environment. This Python has africastalking and Playwright installed. System Python does not.
+
+`kill $XVFB_PID` — shuts down the specific Xvfb process we started. Clean exit, no orphan processes left running.
+
+**To make it executable:**
+```bash
+chmod +x ~/Jumia\ Project/run_check.sh
+```
+Without this, Linux refuses to run it. `chmod +x` grants execute permission.
+
+---
+
+### 6. Cron — The Automatic Scheduler
+
+Cron is a Linux system that runs commands on a schedule. It lives outside your Python code entirely. It answers the question: *who runs `check_prices.py` when you are not at the keyboard?*
+
+**To edit your cron schedule:**
+```bash
+crontab -e
+```
+
+**The flags:**
+- `-e` — edit your scheduled tasks
+- `-l` — list what is currently scheduled
+- `-r` — delete your entire crontab permanently (careful with this one)
+
+**Your current cron line:**
+```
+0 */6 * * * bash "/home/oluwa/Jumia Project/run_check.sh" >> "/home/oluwa/Jumia Project/log.txt" 2>&1
+```
+
+**The five time fields:**
+```
+0 */6 * * *
+│  │   │ │ └── day of week (0–7)
+│  │   │ └──── month (1–12)
+│  │   └────── day of month (1–31)
+│  └────────── hour — */6 means every 6 hours
+└──────────── minute — 0 means at the top of the hour
+```
+
+This runs at 00:00, 06:00, 12:00, and 18:00 every day.
+
+**Other useful schedules:**
+```
+0 */12 * * *   every 12 hours
+0 8 * * *      every day at 8am
+* * * * *      every minute (for testing only)
+```
+
+**The redirect operators:**
+- `>>` means append — add output to the bottom of log.txt without erasing what is there
+- `>` means overwrite — wipe the file and start fresh
+- `2>&1` — merges error output and normal output into the same log file. Without it, errors disappear into nowhere
+
+**To empty the log file without deleting it:**
+```bash
+> ~/Jumia\ Project/log.txt
+```
+The `>` with nothing before it redirects nothing into the file, wiping its contents. The file still exists for cron to write to.
+
+**Important limitation:** Cron lives on your machine. If your laptop is off, cron does not fire. You will miss price changes that happen while the machine is off. A cloud server would solve this — but that is a future problem.
+
+---
+
+## The Complete Data Flow (Phase 4)
+
+```
+Your laptop is on
+  → Cron fires every 6 hours
+    → run_check.sh starts
+      → Xvfb creates a fake display in memory
+        → DISPLAY=:99 tells all programs where the screen is
+          → .venv Python runs check_prices.py
+            → reads config.txt (gets phone number and API key)
+              → authenticates with Africa's Talking
+                → reads each product_N.txt (gets name, old price, URL)
+                  → opens one browser across all products
+                    → visits each Jumia URL
+                      → scrapes rawPrice from the HTML
+                        → compares current price to old price
+                          → if changed: prints result + fires SMS via AT
+                          → updates product_N.txt with new price and timestamp
+              → browser closes
+            → Xvfb shuts down cleanly
+              → all output saved to log.txt
+```
+
+---
+
+## What Can Fail
+
+| Failure | Symptom | Where to look |
+|---|---|---|
+| Laptop is off | No checks run at all | Nothing — you just miss it |
+| Wrong API key | SMS fails, script continues | log.txt shows "SMS failed" |
+| Phone number wrong format | AT rejects recipient | Needs +233, not 0 |
+| Jumia updates bot detection | "Price not found" | log.txt, test manually |
+| .venv not active | ModuleNotFoundError | Activate .venv first |
+| config.txt missing | Script crashes immediately | Check file exists in project folder |
+| Xvfb not installed | Browser crashes silently | Run sudo apt install xvfb |
+
+---
+
+## Files in Your Project Right Now
+
+```
+~/Jumia Project/
+├── add_product.py       Phase 1 — add a product to track
+├── get_price.py         Phase 2 — one-off price lookup (debugging tool)
+├── check_prices.py      Phase 3+4 — check all products, send SMS if changed
+├── run_check.sh         Phase 4 — wrapper that sets up the environment for cron
+├── config.txt           Phase 4 — your AT credentials (never share this)
+├── product_1.txt        data — tracked product (name, price, URL, last checked)
+└── log.txt              data — cron output log
+```
+
+---
+
+## If You Had To Rebuild This From Scratch
+
+1. Create project folder
+2. Write `add_product.py`, `get_price.py`, `check_prices.py`
+3. Create `.venv` with `python3 -m venv .venv` and activate it
+4. Install packages: `pip install playwright africastalking`
+5. Install Playwright browsers: `playwright install chromium`
+6. Sign up at africastalking.com, get username and API key
+7. Create `config.txt` with phone, username, API key
+8. Install Xvfb: `sudo apt install xvfb`
+9. Write `run_check.sh` with Xvfb + DISPLAY + venv Python path
+10. Make it executable: `chmod +x run_check.sh`
+11. Add to cron: `crontab -e` with `0 */6 * * *` schedule
+12. Test with `* * * * *` for one minute, check log.txt, switch back
+
+---
+
+*Summary covers Phase 4 implementation: Africa's Talking SMS integration, virtual environment management, Xvfb setup, shell wrapper script, and cron automation.*
+**************
+phase 7
+*******
+Jinja2 template (.html with {% %} tags)
+        ↓
+Flask processes it — fills in blocks, evaluates variables
+        ↓
+Pure HTML — sent to browser
+        ↓
+Browser displays it
+****************

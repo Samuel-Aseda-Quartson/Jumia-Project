@@ -1,0 +1,119 @@
+ADDING A PRODUCT — FULL REQUEST/RESPONSE JOURNEY
+=================================================
+
+1. USER ACTION
+   User pastes Jumia URL into form and clicks submit button.
+
+2. BROWSER
+   Collects form data and sends HTTP POST request to /add-product.
+   POST because data is being submitted and state will change.
+   Browser does not validate business rules — only basic checks.
+
+3. FLASK RECEIVES
+   Flask is listening on port 5000.
+   Receives the POST request and matches it to the add_product route.
+   request.form contains the submitted data as a dictionary.
+
+4. FLASK CHECKS METHOD
+   if request.method == "POST" branch runs.
+   Flask extracts jumia_url = request.form.get("jumia_url")
+
+5. FLASK VALIDATES
+   Check 1: Is the field empty?
+            if not jumia_url → flash error, re-render form
+   Check 2: Does it contain "jumia.com"?
+            if not → flash error, re-render form
+   
+   WHY FLASK VALIDATES AND NOT BROWSER:
+   Browser validation can be bypassed in seconds.
+   Flask validation runs on the server — nobody can bypass it.
+   Browser validation = UX convenience.
+   Flask validation = real security.
+
+6. FLASK COORDINATES (Phase 7 placeholder)
+   Currently: flashes success message only.
+   Phase 6 will add:
+   → scraper.scrape(jumia_url) — Playwright visits Jumia, returns data
+   → storage.save(scraped_data) — saves to database
+   Only these two lines change. Everything else stays the same.
+   This is Separation of Concerns protecting the system.
+
+7. FLASK RETURNS
+   flash("Product added successfully!", "success")
+   return redirect(url_for("view_products"))
+   Flask sends a 302 redirect response pointing to /products.
+   302 = "go here instead"
+   Flask does NOT render a page directly after POST.
+
+8. BROWSER FOLLOWS REDIRECT
+   Browser receives 302.
+   Automatically makes a new GET request to /products.
+   This is the POST/Redirect/GET pattern.
+   WHY: If user refreshes, browser only repeats the GET.
+   Without redirect, refresh would resubmit the POST
+   and add the same product twice.
+
+9. FLASK RESPONDS TO GET
+   view_products() function runs.
+   Returns products.html with product list rendered.
+   Status 200.
+
+10. USER SEES
+    Products page loads.
+    Flash message appears: "Product added successfully!"
+    Flash message disappears on next request — one time only.
+
+=================================================
+
+
+=================================================
+FOR LOGIN
+*************
+1. GET  → render login.html
+
+2. POST → extract email and password from request.form
+
+3. Validate → are both fields present?
+              if not → flash error, re-render form
+
+4. Find user → loop through users list
+               match by email
+               if no match → flash "invalid credentials", re-render form
+               (never say "email not found" — security reason)
+
+5. Verify password → bcrypt.checkpw(submitted, stored_hash)
+                     if no match → flash "invalid credentials", re-render form
+                     The rule: never confirm which field failed during login
+
+6. Create session → session["user_id"] = user["id"]
+                    session["user_name"] = user["name"]
+                    this is what protects routes later
+
+7. Redirect → url_for("view_products")
+              POST/Redirect/GET pattern
+
+8. User sees → products page with flash "Welcome back, Samuel"
+
+=========================================================
+
+KEY PRINCIPLES IN THIS JOURNEY
+
+DRY               → url_for() used everywhere, not hardcoded paths
+Separation of Concerns → browser displays, Flask coordinates,
+                         scraper scrapes, database stores
+Design by Contract → name="jumia_url" in HTML must exactly match
+                     request.form.get("jumia_url") in Flask
+Design for Change  → scraper and storage are isolated so Phase 6
+                     only touches two lines in the route
+POST/Redirect/GET  → always redirect after POST to prevent
+                     duplicate submissions on refresh
+
+=================================================
+STATUS CODES IN THIS JOURNEY
+
+200 → products page loaded successfully
+302 → redirect after successful POST
+404 → route not found
+405 → wrong HTTP method used on a route
+500 → something crashed in Flask logic
+504 → scraper took too long to respond

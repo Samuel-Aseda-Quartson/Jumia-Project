@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Jumia Price Tracker{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 — grid and utilities only, we override everything visual -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Our CSS loads last — overrides Bootstrap defaults -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<!-- =====================================================
+     NAVIGATION
+     ===================================================== -->
+<nav class="navbar navbar-expand-md sticky-top" id="main-nav">
+    <div class="container">
+
+        <!-- Brand — orange, left -->
+        <a class="navbar-brand" href="{{ url_for('home') }}">
+            Jumia Tracker
+        </a>
+
+        <!-- Hamburger — mobile only -->
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navMenu"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Nav links — right aligned -->
+        <div class="collapse navbar-collapse" id="navMenu">
+            <ul class="navbar-nav ms-auto align-items-center gap-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('view_products') }}">My Products</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('add_product') }}">Add Product</a>
+                </li>
+
+                {% if session.user_id %}
+                    <li class="nav-item">
+                        <a class="nav-link nav-logout" href="{{ url_for('logout') }}">
+                            Logout
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <!-- Solid orange button — black text -->
+                        <a class="btn-nav-cta" href="{{ url_for('signup') }}">
+                            Get Started
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+    <!-- =====================================================
+         FLASH MESSAGES
+         Appear below nav, above page content
+         Dismissed by user via Bootstrap JS
+         ===================================================== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close btn-close-white"
+                                data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- =====================================================
+         MAIN CONTENT
+         flex: 1 in CSS ensures this fills remaining height
+         Pushes footer to bottom on short pages
+         ===================================================== -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+    <footer id="main-footer">
+        <div class="container">
+            <div class="footer-inner">
+                <span class="footer-brand">Jumia Tracker</span>
+                <span class="footer-copy">
+                    &copy; 2026 — Built in Ghana 🇬🇭
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS — bottom of body so HTML renders before JS runs -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

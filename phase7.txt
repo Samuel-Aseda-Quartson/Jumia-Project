@@ -1,0 +1,173 @@
+# Jumia Price Tracker — Phase 7 Complete
+# Date: Current session
+
+=============================================
+WHAT PHASE 7 BUILT
+=============================================
+
+A fully styled, authenticated web interface
+with the following pages:
+
+/           → home.html      → hero, CTAs, SVG illustration
+/signup     → signup.html    → creates user, bcrypt hash
+/login      → login.html     → verifies user, creates session
+/products   → products.html  → shows tracked products (hardcoded)
+/add-product → add_product.html → form, validates Jumia URL
+/logout     → no template    → clears session, redirects
+
+=============================================
+CURRENT FILE STRUCTURE
+=============================================
+
+jumia_tracker/
+├── app.py
+├── templates/
+│   ├── base.html
+│   ├── home.html
+│   ├── login.html
+│   ├── signup.html
+│   ├── products.html
+│   └── add_product.html
+└── static/
+    ├── style.css
+    ├── hero-illustration.svg
+    └── signup-illustration.svg
+
+=============================================
+app.py CURRENT STATE
+=============================================
+
+Imports: Flask, render_template, request,
+         redirect, url_for, flash, session, bcrypt
+
+app.secret_key = "dev-secret-key-change-in-production"
+
+Temporary storage:
+users = []    ← resets on restart
+              ← Phase 6 replaces with database
+
+Routes:
+GET  /                → home()
+GET  /products        → view_products() [protected]
+GET  /add-product     → add_product()   [protected]
+POST /add-product     → add_product()   [protected]
+GET  /signup          → signup()
+POST /signup          → signup()
+GET  /login           → login()
+POST /login           → login()
+GET  /logout          → logout()
+
+Protection pattern:
+if "user_id" not in session:
+    flash(message, "danger")
+    return redirect(url_for("login"))
+
+=============================================
+DESIGN SYSTEM
+=============================================
+
+Framework: Bootstrap 5 via CDN
+Fonts: Poppins (display) + Inter (body) via Google Fonts
+Theme: Dark canvas (#0A0A0A), Jumia orange (#F68B1E)
+
+Key tokens:
+--background:  #0A0A0A
+--card:        #141414
+--primary:     #F68B1E  (Jumia orange)
+--foreground:  #F8F8F8
+--border:      #2A2A2A
+--secondary:   #1E1E1E
+
+Bootstrap overrides target raw HTML elements
+(input, select, textarea) using !important
+to beat Bootstrap specificity on dark theme.
+
+=============================================
+AUTHENTICATION FLOW
+=============================================
+
+SIGNUP:
+1. Extract name, email, password from form
+2. Validate all fields present
+3. Check email not already in users list
+4. bcrypt.hashpw(password.encode(), salt)
+5. Append new user dict to users list
+6. Flash success, redirect to login
+
+LOGIN:
+1. Extract email, password from form
+2. Validate fields present
+3. Find user by email in users list
+4. bcrypt.checkpw(submitted, stored_hash)
+5. On match: session["user_id"] = user["id"]
+             session["user_name"] = user["name"]
+6. Flash welcome, redirect to view_products
+
+LOGOUT:
+1. session.clear()
+2. Flash logged out, redirect to login
+
+=============================================
+WHAT PHASE 6 MUST REPLACE
+=============================================
+
+1. users = []
+   → becomes a Users table in SQLite database
+
+2. products = [{hardcoded}]
+   → becomes a Products table
+   → each product linked to a user_id
+   → scraped from real Jumia URLs
+
+3. for user in users: if user["email"] == email
+   → becomes db.query("SELECT * FROM users WHERE email=?")
+
+4. users.append(new_user)
+   → becomes db.execute("INSERT INTO users ...")
+
+IMPORTANT: Flask routes change minimally.
+Templates change zero lines.
+Only the data source changes — this is
+Separation of Concerns protecting the system.
+
+=============================================
+PHASE 6 GOALS
+=============================================
+
+1. SQLite database with two tables:
+   - users (id, name, email, password)
+   - products (id, user_id, name, price, url, timestamp)
+
+2. Each user sees only their own products
+
+3. Real Playwright scraper wired to add_product route
+
+4. Price history table for tracking changes over time
+
+5. SMS alert logic from Phase 4 wired back in
+
+=============================================
+TEACHING APPROACH FOR NEXT MENTOR
+=============================================
+
+
+Watch for: Describing things without explaining
+          the problem they solve
+Pattern: Always ask "what breaks if this didn't exist?"
+
+Phase 7 is complete and working.
+Phase 6 starts with SQLite — file-based,
+no server setup, easy to inspect.
+Then SQLAlchemy ORM to abstract the database layer.
+Then wire scraper back in.
+Then wire SMS alerts back in.
+
+Student understands:
+- Full request/response cycle
+- Flask routes, methods, validation
+- Template inheritance and Jinja2
+- Sessions, cookies, bcrypt
+- Separation of concerns
+- DRY, Design by Contract
+- POST/Redirect/GET pattern
+- Route protection

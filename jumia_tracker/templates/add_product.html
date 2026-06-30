@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Add Product — Jumia Price Tracker{% endblock %}
+
+{% block content %}
+<div class="add-product-page">
+    <div class="container">
+
+        <div class="page-header">
+            <h1 class="page-title-accent">Add a Product</h1>
+            <p>Paste a Jumia Ghana product URL to start tracking its price.</p>
+        </div>
+
+        <div class="add-product-card">
+            <form action="{{ url_for('add_product') }}" method="POST">
+
+                <label class="form-label-dark" for="jumia_url">
+                    Jumia Product URL
+                </label>
+
+                <input
+                    type="url"
+                    name="jumia_url"
+                    id="jumia_url"
+                    placeholder="https://www.jumia.com.gh/..."
+                    required
+                >
+
+                <p class="input-hint">
+                    Copy the full URL from your browser while on a Jumia product page.
+                </p>
+
+                <button type="submit" class="btn-auth-submit">
+                    Start Tracking This Product
+                </button>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

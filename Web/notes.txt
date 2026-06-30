@@ -1,0 +1,65 @@
+**********
+For Web UI
+**********
+
+
+******
+When DEBUGGING, always ask:
+What happened? -- 404
+Step 2
+What do I know? -- Browser sent request.- Server responded.
+Step 3
+What evidence am I missing? -- Which URL was requested?
+----// Don't guess,Don't assume,Trace the data flow.---- \\
+*******
+
+Puporse of web UI
+///- The web interface is the user-facing entry point
+ into the price tracking system. 
+ Its job is to collect user actions, send them to the backend,
+  and display the results returned by the system.
+/////
+
+
+////
+Responsibilities
+////
+browser- Collect input & Display feedback
+Flask - 
+Receiving requests
+Validating data
+Coordinating business logic
+Returning responses
+playwright - for scraping jumia
+db - for storing data and retreiving data
+//////
+
+**********
+<input type="text" name="phone_number">
+That name attribute is not how the server stores your data. 
+That's how the browser packages and labels the data before sending it.
+ The server receives a message that says "phone_number = 0241234567" 
+ but what the server does with it, where it puts it, whether it saves it to a database
+  or throws it away — that is entirely decided by your Python code on the server side.
+*********
+
+*********
+200s - Success
+
+400s - Client sent a bad request
+(You arrived at the building.
+But there is no office 312.)
+
+500s -Server broke while handling a request
+(You arrived at office 312.
+The employee opened your file.
+Then their computer exploded)
+*********
+
+*******
+Gateway Timeouts mostly mean:
+Slow business logic
+Slow database
+Slow scraper
+Hung process
+********

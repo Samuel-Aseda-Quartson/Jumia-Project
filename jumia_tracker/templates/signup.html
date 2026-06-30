@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — Jumia Price Tracker{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="container">
+        <div class="auth-layout">
+
+            <!-- ILLUSTRATION — left side, desktop only -->
+            <div class="auth-illustration">
+                <img
+                    src="{{ url_for('static', filename='signup-illustration.svg') }}"
+                    alt="Person signing up"
+                    class="auth-img"
+                >
+                <p class="auth-illustration-caption">
+                    Join others tracking smarter on Jumia Ghana.
+                </p>
+            </div>
+
+            <!-- FORM — right side -->
+            <div class="auth-card">
+
+                <h1>Create account</h1>
+                <p class="auth-subtitle">
+                    Start tracking Jumia prices in minutes.
+                </p>
+
+                <form action="{{ url_for('signup') }}" method="POST">
+
+                    <label class="form-label-dark" for="name">Full Name</label>
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        placeholder="Samuel Mensah"
+                        required
+                    >
+
+                    <label class="form-label-dark" for="email">Email Address</label>
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        placeholder="samuel@example.com"
+                        required
+                    >
+
+                    <label class="form-label-dark" for="password">Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        placeholder="Choose a strong password"
+                        required
+                    >
+
+                    <button type="submit" class="btn-auth-submit">
+                        Create Account
+                    </button>
+
+                </form>
+
+                <div class="auth-divider">
+                    Already have an account?
+                    <a href="{{ url_for('login') }}">Log in</a>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

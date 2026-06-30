@@ -1,0 +1,94 @@
+#UPDATE
+Check price runs manually, I need cron(Linux scheduler) to automate it
+    -- Browser opens and closes for every single product, need a loop 
+No timestamp- no record of when it was last checked or when it changed
+Phase 2 is dead code since phase 1 does same thing
+check for product that prices change regularly and test them.
+///////////
+Cron is a linux scheduler that triggers the automation structure to execute check prices without my manual 
+intervention
+-- X VirtualFramebuffer Xvfb
+launch - Xvfb :99 -screen 0 1280x720x24 &
+verify - ps aux | grep Xvfb
+kil, kill plus id
+////////
+ why the wrapper exists?
+ -- Without it, cron would have a Python script with no display,
+  no environment, and no packages. 
+It would fail silently every single time.
+
+ ////phase3/////
+Start Playwright
+↓
+Launch browser
+↓
+Open tab
+↓
+Visit Jumia page
+↓
+Get HTML
+↓
+Extract rawPrice
+↓
+Compare prices
+↓
+Send SMS
+
+first fix
+# requests was blocked by Cloudflare (403)
+# Playwright launches a real Chromium browser
+# Jumia loads normally through the browser
+
+Problem in Phase 4
+///////////
+problem is not about seeing the browser. 
+The problem is that Jumia's page runs JavaScript that interrogates
+ the browser environment before deciding what HTML to serve back.
+/////////////
+headless=False — browser renders a full visual environment. 
+It has screen dimensions, runs JavaScript the way a real user's browser does, 
+and passes Jumia's checks because it behaves like a human session.
+///////////////
+headless=True — browser runs with no graphical environment at all. 
+Jumia's JavaScript detects signals like missing screen dimensions, m
+issing WebGL, and automation flags baked into the browser — and serves a blocked or stripped page.
+ ////
+ phase4
+ //////
+ Cron (every 6 hours)
+  → run_check.sh
+    → Xvfb (fake display)
+      → check_prices.py
+        → reads product_N.txt
+          → scrapes Jumia
+            → compares prices
+              → SMS via Africa's Talking
+                → updates product_N.txt
+///////
+
+
+
+
+0595736895 - Stanley
+
+africtalking pc: E$V*C%z6eQ88it8
+
+
+web app that track apps that use your data and gives you sms notification
+
+////
+127.0.0.1 is called a loopback address.
+ It is a special address that means
+  "only accept connections from this exact machine." 
+////
+
+
+error runining jinja2 for the first time:
+Jinja2 processes your template BEFORE the browser sees any HTML. 
+It does not care that {% %} is inside an HTML comment. 
+HTML comments are invisible to browsers — 
+but Jinja2 runs first, before the browser is involved at all.
+ So Jinja2 tried to execute that empty tag and crashed.
+ error -
+ ** <!-- {% %} is Jinja2 syntax — Flask's templating language --> **
+solved by removing those comments.
