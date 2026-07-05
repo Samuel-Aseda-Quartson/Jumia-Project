@@ -1,0 +1,10 @@
+config.txt
+big_picture.txt
+flask_note.txt
+log.txt
+notes.txt
+phase7.txt
+*.db
+.env
+__pycache__/
+.venv/
