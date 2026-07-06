@@ -1,15 +1,121 @@
 {% extends "base.html" %}
 
-{% block title %}Home — Jumia Price Tracker{% endblock %}
+{% block title %}
+    {% if session.user_id %}
+        Dashboard — Jumia Price Tracker
+    {% else %}
+        Home — Jumia Price Tracker
+    {% endif %}
+{% endblock %}
 
 {% block content %}
 
-<!-- =====================================================
-     HERO SECTION
-     Full viewport height, content centered vertically
-     No gradients — solid background from body
-     ===================================================== -->
+{% if session.user_id %}
 
+<!-- LOGGED-IN: Personal Dashboard -->
+<div class="products-page">
+    <div class="container">
+
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="page-title-accent">
+                        Welcome, {{ session.user_name }}
+                    </h1>
+                    <p>Products you are currently tracking on Jumia.</p>
+                </div>
+                <a href="{{ url_for('add_product') }}" class="btn-cta-filled">
+                    + Add Product
+                </a>
+            </div>
+        </div>
+
+        {% if products %}
+            <div class="products-grid">
+                {% for product in products %}
+
+                    <!-- Get this product's price change data -->
+                    <!-- price_changes is a dict passed from Flask -->
+                    {% set change = price_changes.get(product['id']) %}
+
+                    <div class="product-card {% if product['name'] == 'Fetching product details...' %}product-card--loading{% endif %}">
+
+                        <!-- Product Name -->
+                        <p class="product-name">{{ product['name'] }}</p>
+
+                        <!-- Price + Change Indicator -->
+                        <div class="product-price-row">
+                            <p class="product-price">
+                                <span>GHS</span>{{ "%.2f"|format(product['price']) }}
+                            </p>
+
+                            <!-- Price change indicator — only shown if history exists -->
+                            {% if change %}
+                                {% if change['direction'] == 'down' %}
+                                    <span class="price-badge price-down">
+                                        ↓ GHS {{ "%.2f"|format(change['diff']) }}
+                                    </span>
+                                {% elif change['direction'] == 'up' %}
+                                    <span class="price-badge price-up">
+                                        ↑ GHS {{ "%.2f"|format(change['diff']) }}
+                                    </span>
+                                {% else %}
+                                    <span class="price-badge price-same">
+                                        — No change
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Last checked timestamp -->
+                        <p class="product-timestamp">
+                            Last checked: {{ product['last_checked'] }}
+                        </p>
+
+                        <!-- Action buttons row -->
+                        <div class="product-actions">
+                            <a class="product-link"
+                               href="{{ product['url'] }}"
+                               target="_blank">
+                                View on Jumia ↗
+                            </a>
+
+                            <!-- Delete button — POST method for security -->
+                            <!-- GET delete would allow anyone to delete via URL -->
+                            <form action="{{ url_for('delete_product', product_id=product['id']) }}"
+                                  method="POST"
+                                  onsubmit="return confirm('Remove this product from tracking?')">
+                                <button type="submit" class="btn-delete">
+                                    Remove
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-state-icon">🛒</span>
+                <h2>No products yet</h2>
+                <p>
+                    Add a Jumia product URL and we will track
+                    its price and alert you when it drops.
+                </p>
+                <a href="{{ url_for('add_product') }}" class="btn-cta-filled">
+                    Track Your First Product
+                </a>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% else %}
+
+<!-- LOGGED-OUT: Hero for new visitors -->
 <section class="hero-section">
     <div class="container">
         <div class="hero-inner">
@@ -23,7 +129,6 @@
                 Get SMS alerts when prices drop.
             </p>
 
-            <!-- SVG ILLUSTRATION -->
             <div class="hero-illustration">
                 <img
                     src="{{ url_for('static', filename='hero-illustration.svg') }}"
@@ -33,16 +138,18 @@
             </div>
 
             <div class="hero-cta-group">
-                <a href="{{ url_for('add_product') }}" class="btn-cta-filled">
-                    Start Tracking
+                <a href="{{ url_for('signup') }}" class="btn-cta-filled">
+                    Get Started Free
                 </a>
-                <a href="{{ url_for('view_products') }}" class="btn-cta-outline">
-                    View My Products
+                <a href="{{ url_for('login') }}" class="btn-cta-outline">
+                    Log In
                 </a>
             </div>
 
         </div>
     </div>
 </section>
-{% endblock %}
 
+{% endif %}
+
+{% endblock %}

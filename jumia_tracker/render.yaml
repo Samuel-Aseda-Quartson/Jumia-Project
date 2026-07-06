@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: jumia-tracker
+    env: python
+    buildCommand: pip install -r requirements.txt && playwright install chromium && playwright install-deps chromium
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: AT_USERNAME
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      - key: PHONE
+        sync: false
+      - key: SECRET_KEY
+        sync: false

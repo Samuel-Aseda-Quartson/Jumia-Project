@@ -6,12 +6,27 @@
     <div class="container">
 
         <div class="page-header">
-            <h1 class="page-title-accent">Add a Product</h1>
-            <p>Paste a Jumia Ghana product URL to start tracking its price.</p>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Back button sits beside the heading -->
+                <button
+                    type="button"
+                    class="btn-back"
+                    onclick="history.back()"
+                    title="Go back"
+                >
+                    &#8592;
+                </button>
+                <div>
+                    <h1 class="page-title-accent">Add a Product</h1>
+                    <p>Paste a Jumia Ghana product URL to start tracking its price.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="add-product-card">
+           <div class="add-product-card">
             <form action="{{ url_for('add_product') }}" method="POST">
+
+            <form action="{{ url_for('add_product') }}" method="POST">     
 
                 <label class="form-label-dark" for="jumia_url">
                     Jumia Product URL

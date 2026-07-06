@@ -46,14 +46,26 @@
                         required
                     >
 
-                    <label class="form-label-dark" for="password">Password</label>
-                    <input
-                        type="password"
-                        name="password"
-                        id="password"
-                        placeholder="Choose a strong password"
-                        required
-                    >
+                   <label class="form-label-dark" for="password">Password</label>
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    placeholder="Choose a strong password"
+                    required
+                >
+
+                <label class="form-label-dark" for="phone">Phone Number</label>
+                <input
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    placeholder="+233XXXXXXXXX"
+                    required
+                >
+                <!-- type="tel" → tells mobile browsers to show number keyboard -->
+                <!-- name="phone" must match request.form.get("phone") in Flask -->
+
 
                     <button type="submit" class="btn-auth-submit">
                         Create Account
